@@ -1,0 +1,12 @@
+compile_and_lint:
+    stage: build
+    script:
+        - python3 -m py_compile pa2/*.py
+        - pylint -E pa2/*.py
+
+run_tests:
+    stage: test
+    script:
+        - cd pa2/ && py.test -v
+    after_script:
+        - cd pa2/ && ../common/grader.py
