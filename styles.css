@@ -1,0 +1,10 @@
+#controls{
+    display:flex;
+    flex-direction: row;
+}
+
+#controls > div{
+    display:flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}

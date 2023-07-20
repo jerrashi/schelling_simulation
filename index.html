@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Schelling Simulation</title>
+    <link rel = "stylesheet" href="styles.css">
+    <script src="schelling.js"></script>
+</head>
+
+<body>
+    <h1>Schelling Simulation</h1>
+    <p>Welcome to my implementation of Schellin's Model of Housing Segregation!</p>
+    <ul>
+        <li><a href="https://jerrashi.github.io">Landing Page</a></li>
+        <li><a href="https://www.github.com/jerrashi">Github</a></li>
+    </ul>
+
+    <table>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div class="board-label">Round <span id="round">34</span></div>
+    <div class="board-label">Satisfied <span id="Satisfied">0.00</span>%</div>
+
+    <div id="controls">
+		<div id="settings1">
+			<input type="button" class="command" id="reset" value="Reset">
+			<input type="button" class="command" id="start" value="Start">
+			<input type="button" class="command" id="stop" value="Stop" disabled="disabled">
+			<input type="button" class="command" id="step" value="Step">
+		</div>		
+		<div id="settings2">
+			<label for="similar">Similar:
+			<span id="similar-value">30</span>%</label>				
+			<input type="range" id="similar" min="0" max="100" value="30">
+			
+			<label for="red-blue">Red/Blue:
+			<span id="red-blue-value">50/50</span>%</label>
+			<input type="range" id="red-blue" min="0" max="100" value="50">
+					
+			<label for="empty">Empty:
+				<span id="empty-value">10</span>%</label>
+			<input type="range" id="empty" min="0" max="100" value="10">
+			
+			<label for="size">Size:
+			<span id="size-value">59x59</span></label>
+			<input type="range" id="size" min="10" max="80" value="50">
+			
+			<label for="delay">Delay:
+			<span id="delay-value">600</span> ms</label>			
+			<input type="range" id="delay" min="0" max="3000" value="100">
+            
+            <label for="max-steps">Max Steps:
+            <span id="max-steps-value">600</span> steps</label>			
+            <input type="range" id="max-steps" min="0" max="3000" value="100">
+		</div>
+	</div>
+
+</body>
+
+</html>
