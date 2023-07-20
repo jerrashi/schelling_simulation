@@ -8,3 +8,26 @@
     flex-direction: column;
     justify-content: space-evenly;
 }
+
+.red{
+    background-color: red;
+}
+
+.blue{
+    background-color: blue;
+}
+
+.empty{
+    background-color: white;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 10px;
+}
+  
+td {
+    width: 10px;
+    height: 10px;
+    border: 1px solid black;
+}

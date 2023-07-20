@@ -1,17 +1,13 @@
-  // Function to update the value in the span tag for each input range
-  function updateRangeValue(rangeId, spanId) {
-    const rangeInput = document.getElementById(rangeId);
-    const spanElement = document.getElementById(spanId);
-    spanElement.textContent = rangeInput.value;
-  }
-
-  // Function to shuffle an array randomly (Fisher-Yates shuffle)
-  function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-  }
+// Initial setup - Call generateGrid() on page load
+window.addEventListener('load', function () {
+    updateRangeValue('similar', 'similar-label');
+    updateRangeValue('red-blue', 'red-blue-label');
+    updateRangeValue('empty', 'empty-label');
+    updateRangeValue('size', 'size-label');
+    updateRangeValue('occupancy', 'occupancy-label'); // Added to update the label for occupancy
+    generateGrid(); // Added to generate and populate the grid on page load
+    updateLabels();
+  });
   
   // Function to generate and populate the grid
   function generateGrid() {
@@ -51,6 +47,21 @@
     }
   }
 
+    // Function to shuffle an array randomly (Fisher-Yates shuffle)
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+      }
+  
+  // Function to update the value in the span tag for each input range
+  function updateRangeValue(rangeId, spanId) {
+    const rangeInput = document.getElementById(rangeId);
+    const spanElement = document.getElementById(spanId);
+    spanElement.textContent = rangeInput.value;
+  }
+
   // Function to update the % satisfied and round labels
   function updateLabels() {
     const grid = document.querySelectorAll('table tbody tr td');
@@ -87,29 +98,13 @@
     updateLabels();
   }
 
-  // Event handlers for input changes
-  document.getElementById('similar').addEventListener('input', function () {
-    updateRangeValue('similar', 'similar-value');
+  // Event handlers for delay and max step changes
+  document.getElementById('delay').addEventListener('change', function () {
+    updateRangeValue('delay', 'delay-value');
   });
-
-  document.getElementById('red-blue').addEventListener('input', function () {
-    updateRangeValue('red-blue', 'red-blue-value');
-    generateGrid();
-  });
-
-  document.getElementById('empty').addEventListener('input', function () {
-    updateRangeValue('empty', 'empty-value');
-    generateGrid();
-  });
-
-  document.getElementById('size').addEventListener('input', function () {
-    updateRangeValue('size', 'size-value');
-    generateGrid();
-  });
-
-  document.getElementById('reset').addEventListener('click', function () {
-    generateGrid();
-    updateLabels();
+  
+  document.getElementById('max-steps').addEventListener('change', function () {
+    updateRangeValue('max-steps', 'max-steps-value');
   });
 
   // The simulation loop
@@ -152,8 +147,8 @@
   });
 
   // Initial setup
-  updateRangeValue('similar', 'similar-value');
-  updateRangeValue('red-blue', 'red-blue-value');
-  updateRangeValue('empty', 'empty-value');
-  updateRangeValue('size', 'size-value');
+  updateRangeValue('similar', 'similar-label');
+  updateRangeValue('red-blue', 'red-blue-label');
+  updateRangeValue('empty', 'empty-label');
+  updateRangeValue('size', 'size-label');
   generateGrid();
