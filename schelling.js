@@ -55,6 +55,26 @@ window.addEventListener('load', function () {
     }
   }
 
+  // Function to update the grid on the webpage without regenerating it
+  function updateGrid() {
+    console.log('Updating grid...');
+    console.log(gridArray);
+    const tableBody = document.querySelector('table tbody');
+    tableBody.innerHTML = ''; // Clear the table
+    const size = gridArray.length;
+  
+    for (let i = 0; i < size; i++) {
+      const row = document.createElement('tr');
+      for (let j = 0; j < size; j++) {
+        const cell = document.createElement('td');
+        cell.className = gridArray[i][j];
+        cell.id = `cell-${i}-${j}`; // Assign unique IDs for each cell
+        row.appendChild(cell);
+      }
+      tableBody.appendChild(row);
+    }
+  }
+
   // Function to shuffle an array randomly (Fisher-Yates shuffle)
   function shuffleArray(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -118,41 +138,42 @@ function startSimulation() {
   
 // Function to update the grid and set the class 'satisfied' for cells that are satisfied
 function performSimulationStep() {
-    // This updates the gridArray and set the class 'satisfied' for cells that are satisfied
     let R = 1; // TODO: Add input field R and get the value of R from the input field
     let simil_threshold = parseInt(document.getElementById('similar').value, 10);
     let occup_threshold = parseInt(document.getElementById('occupancy').value, 10);
   
-    // Create a copy of the gridArray to store the updated values for the next round
-    let newGridArray = JSON.parse(JSON.stringify(gridArray));
+    const size = gridArray.length;
   
-    for (let i = 0; i < gridArray.length; i++) {
-      for (let j = 0; j < gridArray[i].length; j++) {
-        const cellColor = gridArray[i][j];
-        const neighbors = getNeighbors(gridArray, i, j, R);
-        const numSimilarNeighbors = getNumSimilarNeighbors(neighbors, cellColor);
-        const numOccupiedNeighbors = getNumOccupiedNeighbors(neighbors);
+    // Create an array to store unoccupied spots
+    let unoccupiedSpots = [];
   
-        // Check if the cell is satisfied based on the thresholds
-        const isCellSatisfied =
-          numSimilarNeighbors >= simil_threshold && numOccupiedNeighbors >= occup_threshold;
-  
-        // Update the newGridArray with the cell's color
-        newGridArray[i][j] = cellColor;
-  
-        // Apply the "satisfied" class to the cell if it is satisfied
-        const cellElement = document.getElementById(`cell-${i}-${j}`);
-        if (isCellSatisfied) {
-          cellElement.classList.add('satisfied');
-        } else {
-          cellElement.classList.remove('satisfied');
+    // NOTE: This is different than the previous implementation of Schelling's simulation since open spots are provided as input.
+    // Find and store the unoccupied spots
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        if (gridArray[i][j] === 'empty') {
+          unoccupiedSpots.push({ x: i, y: j });
         }
       }
     }
   
-    // Update the gridArray with the newGridArray for the next round
-    gridArray = newGridArray;
+    // Move unsatisfied cells to the closest unoccupied spot that satisfies their thresholds
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        const cellColor = gridArray[i][j];
+        const isCellSatisfied = isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold);
+        if (!isCellSatisfied && cellColor !== 'empty') {
+          moveUnsatisfiedCells(gridArray, unoccupiedSpots, i, j, R, simil_threshold, occup_threshold);
+        }
+      }
+    }
   
+    // Update the HTML table with the updated gridArray
+    console.log('Grid before updating:');
+    console.log(gridArray);
+    updateGrid();
+    console.log('Grid after updating:');
+    console.log(gridArray);  
     updateLabels();
   }
   
@@ -164,10 +185,10 @@ function isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold) {
     const neighbors = getNeighbors(gridArray, i, j, R);
     const numSimilarNeighbors = getNumSimilarNeighbors(neighbors, cellColor);
     const numOccupiedNeighbors = getNumOccupiedNeighbors(neighbors);
-    return numSimilarNeighbors >= simil_threshold && numOccupiedNeighbors >= occup_threshold;
+    return numSimilarNeighbors/neighbors.length >= simil_threshold && numOccupiedNeighbors/neighbors.length >= occup_threshold;
   }
 
-  function getNeighbors(gridArray, i, j, R) {
+function getNeighbors(gridArray, i, j, R) {
     const neighbors = [];
     const size = gridArray.length;
 
@@ -181,7 +202,7 @@ function isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold) {
     return neighbors;
 }
 
-    function getNumSimilarNeighbors(neighbors, cellColor){
+function getNumSimilarNeighbors(neighbors, cellColor){
     // This function should return the number of neighbors that are similar to the cell color
     let numSimilarNeighbors = 0;
     for (let i = 0; i < neighbors.length; i++) {
@@ -190,9 +211,9 @@ function isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold) {
         }
     }
     return numSimilarNeighbors;
-    }
+}
 
-    function getNumOccupiedNeighbors(neighbors){
+function getNumOccupiedNeighbors(neighbors){
     // This function should return the number of neighbors that are occupied
     let numOccupiedNeighbors = 0;
     for (let i = 0; i < neighbors.length; i++) {
@@ -201,7 +222,82 @@ function isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold) {
         }
     }
     return numOccupiedNeighbors;
+}
+
+// Function to move unsatisfied cells to the closest unoccupied spot that satisfies their thresholds
+function moveUnsatisfiedCells(gridArray, unoccupiedSpots, i, j, R, simil_threshold, occup_threshold) {
+    const size = gridArray.length;
+  
+    // Create an array to store the distances of unoccupied spots from the unsatisfied cell
+    const distances = [];
+  
+    // Function to calculate the Manhattan distance between two points
+    function calculateDistance(x1, y1, x2, y2) {
+      return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }
+  
+    // Iterate through the unoccupied spots and calculate distances
+    for (const spot of unoccupiedSpots) {
+      const dist = calculateDistance(i, j, spot.x, spot.y);
+      distances.push({ x: spot.x, y: spot.y, dist });
+    }
+  
+    // Sort the distances array using merge sort
+    const sortedDistances = mergeSort(distances);
+  
+    // Find the closest unoccupied spot that satisfies the thresholds
+    for (const { x, y } of sortedDistances) {
+      // Move the cell to the target spot
+      let originalCell = gridArray[x][y];
+      gridArray[x][y] = gridArray[i][j];
+      gridArray[i][j] = originalCell;
+  
+      // Check if the cell is satisfied at the proposed location
+      const isSatisfiedProposed = isSatisfied(gridArray, x, y, R, simil_threshold, occup_threshold);
+  
+      if (isSatisfiedProposed) {
+        unoccupiedSpots.push({ x: i, y: j }); // Add the current cell location to unoccupiedSpots
+        const indexToRemove = unoccupiedSpots.findIndex(loc => loc.x === x && loc.y === y);
+        unoccupiedSpots.splice(indexToRemove, 1); // Remove the target spot from unoccupiedSpots
+        break; // Move only once
+      } else {
+        // Revert the changes if the cell is not satisfied at the proposed location
+        gridArray[i][j].className = gridArray[x][y].className;
+        gridArray[x][y].className = originalCell;
+      }
+    }
+  }
+
+// Merge sort function to sort the distances array based on distance in ascending order
+function mergeSort(arr) {
+    if (arr.length <= 1) {
+      return arr;
+    }
+
+    const middle = Math.floor(arr.length / 2);
+    const left = arr.slice(0, middle);
+    const right = arr.slice(middle);
+
+    return merge(mergeSort(left), mergeSort(right));
+  }
+
+  function merge(left, right) {
+    let result = [];
+    let leftIndex = 0;
+    let rightIndex = 0;
+
+    while (leftIndex < left.length && rightIndex < right.length) {
+      if (left[leftIndex].dist < right[rightIndex].dist) {
+        result.push(left[leftIndex]);
+        leftIndex++;
+      } else {
+        result.push(right[rightIndex]);
+        rightIndex++;
+      }
+    }
+
+    return result.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
+  }
 
 
 document.getElementById('step').addEventListener('click', function () {
