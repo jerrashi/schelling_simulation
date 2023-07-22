@@ -12,7 +12,6 @@ window.addEventListener('load', function () {
   // Define a global variable to store the 2D grid array
   let gridArray = [];
   
-  // Function to generate and populate the grid
   function generateGrid() {
     const tableBody = document.querySelector('table tbody');
     tableBody.innerHTML = ''; // Clear the table
@@ -46,7 +45,7 @@ window.addEventListener('load', function () {
       for (let j = 0; j < size; j++) {
         const cell = document.createElement('td');
         cell.className = cells[cellIndex];
-        cell.id = `cell-${cellIndex}`;
+        cell.id = `cell-${i}-${j}`; // Assign unique IDs for each cell
         rowArray.push(cell.className); // Store the color in the 2D array
         cellIndex++;
         row.appendChild(cell);
@@ -90,12 +89,16 @@ window.addEventListener('load', function () {
   
 // The simulation loop
 let currentRound = 0;
-let maxSteps = parseInt(document.getElementById('max-steps').value, 10);
-let delay = parseInt(document.getElementById('delay').value, 10);
 let simulationInterval;
 
 function startSimulation() {
     clearInterval(simulationInterval);
+  
+    // Get the delay value from the input element
+    const delay = parseInt(document.getElementById('delay').value, 10);
+  
+    // Get the maxSteps value from the input element
+    const maxSteps = parseInt(document.getElementById('max-steps').value, 10);
   
     // Start the simulation interval
     simulationInterval = setInterval(function () {
@@ -119,19 +122,37 @@ function performSimulationStep() {
     let R = 1; // TODO: Add input field R and get the value of R from the input field
     let simil_threshold = parseInt(document.getElementById('similar').value, 10);
     let occup_threshold = parseInt(document.getElementById('occupancy').value, 10);
-
+  
+    // Create a copy of the gridArray to store the updated values for the next round
+    let newGridArray = JSON.parse(JSON.stringify(gridArray));
+  
     for (let i = 0; i < gridArray.length; i++) {
-       for (let j = 0; j < gridArray[i].length; j++) {
-        const cell = gridArray[i][j];
-        const isCellSatisfied = isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold);
+      for (let j = 0; j < gridArray[i].length; j++) {
+        const cellColor = gridArray[i][j];
+        const neighbors = getNeighbors(gridArray, i, j, R);
+        const numSimilarNeighbors = getNumSimilarNeighbors(neighbors, cellColor);
+        const numOccupiedNeighbors = getNumOccupiedNeighbors(neighbors);
+  
+        // Check if the cell is satisfied based on the thresholds
+        const isCellSatisfied =
+          numSimilarNeighbors >= simil_threshold && numOccupiedNeighbors >= occup_threshold;
+  
+        // Update the newGridArray with the cell's color
+        newGridArray[i][j] = cellColor;
+  
+        // Apply the "satisfied" class to the cell if it is satisfied
+        const cellElement = document.getElementById(`cell-${i}-${j}`);
         if (isCellSatisfied) {
-           cell.classList.add('satisfied');
-         } else {
-           cell.classList.remove('satisfied');
-         }
-       }
-     }
-
+          cellElement.classList.add('satisfied');
+        } else {
+          cellElement.classList.remove('satisfied');
+        }
+      }
+    }
+  
+    // Update the gridArray with the newGridArray for the next round
+    gridArray = newGridArray;
+  
     updateLabels();
   }
   
@@ -146,21 +167,19 @@ function isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold) {
     return numSimilarNeighbors >= simil_threshold && numOccupiedNeighbors >= occup_threshold;
   }
 
-  function getNeighbors(gridArray, i, j, R){
-    // This function should return an array of neighbors for the cell at index i, j
-    let neighbors = [];
+  function getNeighbors(gridArray, i, j, R) {
+    const neighbors = [];
     const size = gridArray.length;
-    for (let k = i - R; k <= i + R; k++) {
-      for (let l = j - R; l <= j + R; l++) {
-        if (k >= 0 && k < size && l >= 0 && l < size) {
-          if (k !== i || l !== j) {
-            neighbors.push(gridArray[k][l]);
-          }
+
+    for (let x = Math.max(0, i - R); x <= Math.min(i + R, size - 1); x++) {
+      for (let y = Math.max(0, j - R); y <= Math.min(j + R, size - 1); y++) {
+        if (x !== i || y !== j) {
+          neighbors.push(gridArray[x][y]);
         }
       }
     }
     return neighbors;
-  }
+}
 
     function getNumSimilarNeighbors(neighbors, cellColor){
     // This function should return the number of neighbors that are similar to the cell color
@@ -183,9 +202,9 @@ function isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold) {
     }
     return numOccupiedNeighbors;
     }
-    
 
-  document.getElementById('step').addEventListener('click', function () {
+
+document.getElementById('step').addEventListener('click', function () {
     performSimulationStep();
   });
  
@@ -202,21 +221,19 @@ function updateMaxStepsAndDelay() {
 }
 
 document.getElementById('start').addEventListener('click', function () {
-  startSimulation();
-  document.getElementById('start').disabled = true;
-  document.getElementById('stop').disabled = false;
-});
-
-document.getElementById('stop').addEventListener('click', function () {
-  stopSimulation();
-});
-
-document.getElementById('delay').addEventListener('change', function () {
-  updateRangeValue('delay', 'delay-value');
-  updateMaxStepsAndDelay();
-});
-
-document.getElementById('max-steps').addEventListener('change', function () {
-  updateRangeValue('max-steps', 'max-steps-value');
-  updateMaxStepsAndDelay();
-});
+    startSimulation();
+  });
+  
+  document.getElementById('stop').addEventListener('click', function () {
+    stopSimulation();
+  });
+  
+  document.getElementById('delay').addEventListener('change', function () {
+    updateRangeValue('delay', 'delay-value');
+    delay = parseInt(document.getElementById('delay').value, 10); // Update the delay value
+  });
+  
+  document.getElementById('max-steps').addEventListener('change', function () {
+    updateRangeValue('max-steps', 'max-steps-value');
+    maxSteps = parseInt(document.getElementById('max-steps').value, 10); // Update the maxSteps value
+  });
