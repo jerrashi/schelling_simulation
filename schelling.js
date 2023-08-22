@@ -99,20 +99,8 @@ function shuffleArray(arr) {
   }
 }
 
-// Function to update the % satisfied and round labels
+// Function to update the round label
 function updateLabels() {
-  const grid = document.querySelectorAll('table tbody tr td');
-  const gridSize = grid.length;
-  let numSatisfied = 0;
-
-  for (let i = 0; i < gridSize; i++) {
-    if (grid[i].classList.contains('satisfied')) {
-      numSatisfied++;
-    }
-  }
-
-  const percentSatisfied = ((numSatisfied / gridSize) * 100).toFixed(2);
-  document.getElementById('Satisfied').textContent = percentSatisfied;
   document.getElementById('round').textContent = currentRound;
 }
 
@@ -146,8 +134,19 @@ function performSimulationStep() {
   const R = 1; // Radius
   const simil_threshold = parseInt(document.getElementById('similar').value, 10);
   const occup_threshold = parseInt(document.getElementById('occupancy').value, 10);
+  const emptyPercentage = parseInt(document.getElementById('empty').value, 10);
+
   const size = gridArray.length;
   let unoccupiedSpots = [];
+  let numSatisfied = 0; // Added to count the number of satisfied cells
+  let noMoreMoves = true; // Added to check if there are no more possible moves
+
+
+  // Calculate the number of cells for each color
+  const totalCells = size * size;
+  const emptyCells = Math.floor((emptyPercentage / 100) * totalCells);
+  const occupiedCells = totalCells - emptyCells;
+
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       if (gridArray[i][j] === 'empty') {
@@ -155,17 +154,33 @@ function performSimulationStep() {
       }
     }
   }
+
   for (let i = 0; i < size; i++) {
     for (let j = 0; j < size; j++) {
       const cellColor = gridArray[i][j];
       if (cellColor !== 'empty') {
         const isCellSatisfied = isSatisfied(gridArray, i, j, R, simil_threshold, occup_threshold);
+        if (isCellSatisfied) {
+          numSatisfied++; // Increment the count if the cell is satisfied
+        }
         if (!isCellSatisfied) {
+          noMoreMoves = false; // If there is at least one unsatisfied cell, set noMoreMoves to false
           moveUnsatisfiedCell(gridArray, unoccupiedSpots, i, j, R, simil_threshold, occup_threshold);
         }
       }
     }
   }
+
+  const percentSatisfied = ((numSatisfied / occupiedCells) * 100).toFixed(2); // Calculate the % satisfied
+  document.getElementById('Satisfied').textContent = percentSatisfied; // Update the % satisfied label
+
+  // Stop the simulation if there are no more possible moves
+  if (noMoreMoves) {
+    clearInterval(simulationInterval);
+    document.getElementById('start').disabled = false;
+    document.getElementById('stop').disabled = true;
+  }
+
   updateGrid();
 }
 
@@ -217,3 +232,30 @@ function moveUnsatisfiedCell(gridArray, unoccupiedSpots, i, j, R, simil_threshol
 // Event listeners
 document.getElementById('start').addEventListener('click', startSimulation);
 document.getElementById('stop').addEventListener('click', stopSimulation);
+
+// Event listener for the 'Step' button
+document.getElementById('step').addEventListener('click', function () {
+  performSimulationStep();
+  currentRound++; // Increment the current round
+  updateLabels(); // Update the labels
+});
+
+// Event listener for the 'Reset' button
+document.getElementById('reset').addEventListener('click', function () {
+  // Reset the grid array and current round
+  gridArray = [];
+  currentRound = 0;
+
+  // Generate a new grid
+  generateGrid();
+
+  // Update the labels
+  updateLabels();
+
+  // Stop any ongoing simulation
+  clearInterval(simulationInterval);
+
+  // Enable the 'Start' button and disable the 'Stop' button
+  document.getElementById('start').disabled = false;
+  document.getElementById('stop').disabled = true;
+});
